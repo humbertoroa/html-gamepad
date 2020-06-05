@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Simple Game Loop Example</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width">
+  <link type="text/css" rel="stylesheet" href="css/site.css">
+  <style>
+    tr.pressed td {
+      background-color: tomato;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="content"></div>
+
+  <script type="text/javascript" src="js/site.js"></script>
+  <script>
+    //------------------------------------------
+    // Initialize.
+    let htmlContainer = document.getElementById("content")
+
+    //------------------------------------------
+    // Game loop.
+    let lastTimeStamp = 0;
+    const fpsCalc = new MovingAverageCalculator();
+    const elapsedTimeCalc = new MovingAverageCalculator();
+
+    let gameData = {
+      timeStamp: 0,
+      fps: 0
+    };
+
+    // Game loop function to get the user input.
+    function processGameInput() {
+      // TODO: Get user input.
+    }
+
+    // Game loop function to calculate the game data.
+    function updateGameData(timeStamp) {
+      // TODO: Update the game data.
+      let elapsedTime = timeStamp - lastTimeStamp;
+      let fps = 1000.0 / elapsedTime;
+
+      elapsedTimeCalc.update(elapsedTime);
+      fpsCalc.update(fps);
+
+      gameData = {
+        timeStamp: timeStamp,
+        fps: Math.round(fpsCalc.mean),
+        elapsedTime: Math.round(elapsedTimeCalc.mean)
+      };
+
+      lastTimeStamp = timeStamp;
+    }
+
+    // Game loop function to update the page.
+    function renderGameView() {
+      // Create the page html.
+      let html = `
+        <h1>Game Loop</h1>
+        <table>
+          <tr>
+            <td>time stamp</td>
+            <td>${gameData.timeStamp}</td>
+          </tr>
+          <tr>
+            <td>fps</td>
+            <td>${gameData.fps}</td>
+          </tr>
+          <tr>
+            <td>elapsed time</td>
+            <td>${gameData.elapsedTime}</td>
+          </tr>
+        </table>
+        `;
+      htmlContainer.innerHTML = html;
+    }
+
+    // The main game loop.
+    function gameLoop(timestamp) {
+      processGameInput();
+      updateGameData(timestamp);
+      renderGameView();
+      doGameLoop();
+    }
+
+    // Loop function that only runs the game loop for each frame in the fps.
+    var fps = 21;
+
+    function doGameLoop() {
+      // The next game loop will be triggered in 1/fps seconds.
+      setTimeout(function() {
+        requestAnimationFrame(gameLoop);
+      }, 1000 / fps);
+    }
+
+    //------------------------------------------
+    // Event handlers.
+    // Setup when the window is loaded.
+    window.addEventListener('load', (event) => {
+      doGameLoop();
+    });
+  </script>
+</body>
+
+</html>
