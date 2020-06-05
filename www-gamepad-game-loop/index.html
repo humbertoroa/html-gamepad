@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Gamepad Example</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width">
+  <link type="text/css" rel="stylesheet" href="css/site.css">
+  <style>
+    tr.pressed td {
+      background-color: tomato;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="content"></div>
+
+  <script type="text/javascript" src="js/site.js"></script>
+  <script>
+    //------------------------------------------
+    // Initialize.
+    let htmlContainer = document.getElementById("content")
+
+    //------------------------------------------
+    // Game loop.
+
+    let gamePad;
+    let gameData = {};
+    let controllerConnected = false;
+
+    // Game loop function to get the user input.
+    function processGameInput() {
+      // Get the game pad at index 0.
+      gamePad = navigator.getGamepads()[0];
+    }
+
+    // Game loop function to calculate the game data.
+    function updateGameData() {
+      // TODO: Update the game data.
+
+    }
+
+    // Game loop function to update the page.
+    function renderGameView() {
+      // Create the html for the axes.
+      let controllerAxisHtml = "<table>";
+      gamePad.axes.forEach(function(axis, index, array) {
+        let value = Math.round(axis * 100);
+        value = Math.abs(value) > 5 ? value : 0;
+
+        let axisClass = "";
+        if (value != 0) {
+          axisClass = "pressed";
+        }
+        controllerAxisHtml += `<tr class="${axisClass}"><td>${index}</td><td>${value}</td><tr>`;
+      });
+      controllerAxisHtml += "</table>";
+
+      // Create the html for the buttons.
+      let controllerButtonHtml = "<table>";
+      gamePad.buttons.forEach(function(button, index, array) {
+        let buttonClass = "";
+        if (button.pressed) {
+          buttonClass = "pressed";
+        }
+        controllerButtonHtml += `<tr class="${buttonClass}"><td>${index}</td><td>${button.value}</td><tr>`;
+      });
+      controllerButtonHtml += "</table>";
+
+      // Create the page html.
+      let html = `
+        <h1>Controller</h1>
+        <h2>Axes</h2>
+        ${controllerAxisHtml}
+        <h2>Buttons</h2>
+        ${controllerButtonHtml}
+        `;
+      htmlContainer.innerHTML = html;
+    }
+
+    // The main game loop.
+    function gameLoop(timestamp) {
+      processGameInput();
+      updateGameData();
+      renderGameView();
+      doGameLoop();
+    }
+
+    // Loop function that only runs the game loop for each frame in the fps.
+    var fps = 30;
+
+    function doGameLoop() {
+      // Gate: exit the function early of there is no controller.
+      if (!controllerConnected) return;
+
+      // The next game loop will be triggered in 1/fps seconds.
+      setTimeout(function() {
+        requestAnimationFrame(gameLoop);
+      }, 1000 / fps);
+    }
+
+
+    //------------------------------------------
+    // Event handlers.
+
+    // Start message.
+    function showStartMessage() {
+      let html = `
+        <h1>Controller</h1>
+        <p>Please contect your controller</p>
+        `;
+      htmlContainer.innerHTML = html;
+    }
+
+    // Setup when the window is loaded.
+    window.addEventListener('load', (event) => {
+      showStartMessage();
+    });
+
+    // Wait for a controller to be connected.
+    window.addEventListener('gamepadconnected', (e) => {
+      controllerConnected = true;
+      doGameLoop();
+    });
+
+    // Handle the case when a controller is disconnected.
+    window.addEventListener('gamepaddisconnected', (e) => {
+      controllerConnected = false;
+      showStartMessage();
+    });
+  </script>
+</body>
+
+</html>
