@@ -26,14 +26,12 @@
 
     //------------------------------------------
     // Game loop.
-    let lastTimeStamp = 0;
-    const fpsCalc = new MovingAverageCalculator();
-    const elapsedTimeCalc = new MovingAverageCalculator();
-
-    let gameData = {
+    let fpsData = {
       timeStamp: 0,
       fps: 0
     };
+
+    let gameData = {};
 
     // Game loop function to get the user input.
     function processGameInput() {
@@ -41,21 +39,10 @@
     }
 
     // Game loop function to calculate the game data.
-    function updateGameData(timeStamp) {
+    function updateGameData(elapsed) {
       // TODO: Update the game data.
-      let elapsedTime = timeStamp - lastTimeStamp;
-      let fps = 1000.0 / elapsedTime;
+      fpsCalc.update(1000.0 / elapsed);
 
-      elapsedTimeCalc.update(elapsedTime);
-      fpsCalc.update(fps);
-
-      gameData = {
-        timeStamp: timeStamp,
-        fps: Math.round(fpsCalc.mean),
-        elapsedTime: Math.round(elapsedTimeCalc.mean)
-      };
-
-      lastTimeStamp = timeStamp;
     }
 
     // Game loop function to update the page.
@@ -66,45 +53,61 @@
         <table>
           <tr>
             <td>time stamp</td>
-            <td>${gameData.timeStamp}</td>
+            <td>${fpsData.timeStamp}</td>
           </tr>
           <tr>
             <td>fps</td>
-            <td>${gameData.fps}</td>
-          </tr>
-          <tr>
-            <td>elapsed time</td>
-            <td>${gameData.elapsedTime}</td>
+            <td>${fpsData.fps}</td>
           </tr>
         </table>
         `;
       htmlContainer.innerHTML = html;
     }
 
+    var previous = 0.0,
+      lag = 0.0,
+      elapsed = 0.0,
+      maxFPS = 100.0,
+      timestep = 1000.0 / maxFPS;
+
+    const fpsCalc = new MovingAverageCalculator();
+    const lagCalc = new MovingAverageCalculator();
+
     // The main game loop.
-    function gameLoop(timestamp) {
-      processGameInput();
-      updateGameData(timestamp);
-      renderGameView();
-      doGameLoop();
-    }
+    function gameLoop(current) {
+      elapsed = current - previous;
 
-    // Loop function that only runs the game loop for each frame in the fps.
-    var fps = 21;
-
-    function doGameLoop() {
-      // The next game loop will be triggered in 1/fps seconds.
-      setTimeout(function() {
+      // If the time elapsed is less than the time step, request another frame.
+      // This has the loop wait for the time step.
+      if (elapsed < timestep) {
         requestAnimationFrame(gameLoop);
-      }, 1000 / fps);
+        //updateGameData(elapsed);
+        return;
+      }
+
+      previous = current;
+      lag += elapsed;
+
+      // Get input.
+      processGameInput();
+
+      // Update.
+      while (lag >= timestep) {
+        updateGameData(elapsed);
+        lag -= timestep;
+      }
+
+      fpsData = {
+        timeStamp: current,
+        fps: Math.round(fpsCalc.mean),
+      };
+
+      // Render.
+      renderGameView();
+      requestAnimationFrame(gameLoop);
     }
 
-    //------------------------------------------
-    // Event handlers.
-    // Setup when the window is loaded.
-    window.addEventListener('load', (event) => {
-      doGameLoop();
-    });
+    requestAnimationFrame(gameLoop);
   </script>
 </body>
 
